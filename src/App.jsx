@@ -3,17 +3,16 @@ import React, { useState, useEffect, useMemo } from "react";
 // --- CONSTANTS & HELPERS ---
 const TOTAL_ROOMS = 10;
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
 const formatDate = (d) => d.toISOString().split("T")[0];
 
 const getHeatColor = (count) => {
   if (count === 0) return "#1E1E1E"; 
   const ratio = count / TOTAL_ROOMS;
-  if (ratio <= 0.2) return "#D1FAE5"; // 1-2: Emerald 100
-  if (ratio <= 0.4) return "#A7F3D0"; // 3-4: Emerald 200
-  if (ratio <= 0.6) return "#FDE68A"; // 5-6: Amber 200
-  if (ratio <= 0.8) return "#FDBA74"; // 7-8: Orange 300
-  return "#F87171"; // 9-10: Red 400
+  if (ratio <= 0.2) return "#D1FAE5"; 
+  if (ratio <= 0.4) return "#A7F3D0"; 
+  if (ratio <= 0.6) return "#FDE68A"; 
+  if (ratio <= 0.8) return "#FDBA74"; 
+  return "#F87171"; 
 };
 
 const getMonthDays = (year, month) => {
@@ -80,7 +79,7 @@ export default function App() {
     return {
       revenue: (totalRev / 100000).toFixed(1) + "L",
       count: active.length,
-      avgNights: (totalNights / active.length).toFixed(1)
+      avgNights: active.length ? (totalNights / active.length).toFixed(1) : 0
     };
   }, [bookings]);
 
@@ -98,28 +97,35 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Guestara_Report_${activeRange[0]}.csv`;
+    a.download = `Guestara_Report.csv`;
     a.click();
   };
 
   if (loading) return <div className="h-screen bg-[#0F0F0F] flex items-center justify-center text-blue-500 font-bold">LOADING GUESTARA...</div>;
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-[#E0E0E0] p-8 font-sans flex gap-10">
+    <div className="h-screen bg-[#0F0F0F] text-[#E0E0E0] p-8 font-sans flex gap-10 overflow-hidden">
       
       {/* LEFT: CALENDAR SECTION */}
-      <div className="flex-1">
-        <header className="flex justify-between items-center mb-8">
+      <div className="flex-1 flex flex-col h-full overflow-y-auto pr-4 custom-scrollbar">
+        <header className="flex justify-between items-end mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               {viewDate.toLocaleString("default", { month: "long" })} {viewDate.getFullYear()}
             </h1>
-            <p className="text-gray-500 text-sm mt-1">Live occupancy heatmap for Guestara Hotel</p>
+            {/* HEAT LEVEL LEGEND - NOW AT TOP */}
+            <div className="mt-4 flex items-center gap-3 bg-[#1A1A1A] w-fit px-4 py-2 rounded-xl border border-[#2A2A2A]">
+              <span className="text-[10px] uppercase font-bold text-gray-500">Heat Level</span>
+              <div className="flex gap-2">
+                {[0, 2, 5, 8, 10].map(c => <div key={c} style={{backgroundColor: getHeatColor(c)}} className="w-4 h-4 rounded-md" />)}
+              </div>
+              <span className="text-[10px] uppercase font-bold text-gray-300">High</span>
+            </div>
           </div>
           <div className="flex gap-2 bg-[#1A1A1A] p-1.5 rounded-xl border border-[#2A2A2A]">
-            <button className="px-4 py-2 hover:bg-[#2A2A2A] rounded-lg transition-all" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))}>←</button>
-            <button className="px-6 py-2 font-bold bg-[#2A2A2A] rounded-lg text-blue-400" onClick={() => setViewDate(new Date(2026, 1, 1))}>Today</button>
-            <button className="px-4 py-2 hover:bg-[#2A2A2A] rounded-lg transition-all" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))}>→</button>
+            <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))}>←</button>
+            <button className="px-5 py-2 font-bold bg-[#2A2A2A] rounded-lg text-blue-400 text-sm" onClick={() => setViewDate(new Date(2026, 1, 1))}>Today</button>
+            <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))}>→</button>
           </div>
         </header>
 
@@ -132,7 +138,6 @@ export default function App() {
             const dStr = formatDate(day.date);
             const count = occupancyMap[dStr] || 0;
             const isSelected = activeRange[0] && dStr >= activeRange[0] && dStr <= activeRange[1];
-            const color = day.isCurrent ? getHeatColor(count) : "#161616";
 
             return (
               <div
@@ -140,10 +145,10 @@ export default function App() {
                 onMouseDown={() => { setIsDragging(true); setDragStart(dStr); setDragEnd(dStr); setSelection({start:null, end:null}); }}
                 onMouseEnter={() => isDragging && setDragEnd(dStr)}
                 onMouseUp={() => { setIsDragging(false); setSelection({start: activeRange[0], end: activeRange[1]}); }}
-                style={{ backgroundColor: color }}
-                className={`h-28 p-4 rounded-2xl flex flex-col justify-between transition-all relative border border-transparent
-                  ${!day.isCurrent ? "opacity-10 cursor-not-allowed" : "hover:scale-[1.03] cursor-pointer hover:shadow-xl"}
-                  ${isSelected ? "ring-2 ring-blue-500 border-blue-400" : "border-[#222]"}`}
+                style={{ backgroundColor: day.isCurrent ? getHeatColor(count) : "#161616" }}
+                className={`h-28 p-4 rounded-2xl flex flex-col justify-between transition-all relative border 
+                  ${!day.isCurrent ? "opacity-10 cursor-not-allowed border-transparent" : "hover:scale-[1.02] cursor-pointer border-[#222]"}
+                  ${isSelected ? "ring-2 ring-blue-500 border-blue-400 z-10" : ""}`}
               >
                 <span className={`text-lg font-black ${count > 6 ? 'text-black' : 'text-gray-300'}`}>{day.date.getDate()}</span>
                 {day.isCurrent && (
@@ -155,33 +160,25 @@ export default function App() {
             );
           })}
         </div>
-        
-        <div className="mt-8 flex items-center gap-4 bg-[#1A1A1A] w-fit px-5 py-3 rounded-2xl border border-[#2A2A2A]">
-          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-tighter">Heat Level</span>
-          <div className="flex gap-2">
-            {[0, 2, 5, 8, 10].map(c => <div key={c} style={{backgroundColor: getHeatColor(c)}} className="w-5 h-5 rounded-md shadow-inner" />)}
-          </div>
-          <span className="text-[10px] uppercase font-bold text-gray-300">High</span>
-        </div>
       </div>
 
-      {/* RIGHT: DASHBOARD SECTION */}
-      <div className="w-[400px] flex flex-col gap-6">
-        <div className="grid grid-cols-2 gap-4">
+      {/* RIGHT: DASHBOARD SECTION - FIXED HEIGHT STICKY */}
+      <div className="w-[400px] flex flex-col gap-6 h-full">
+        <div className="grid grid-cols-2 gap-4 flex-shrink-0">
           <StatCard label="Avg occupancy" value="73%" />
           <StatCard label="Month revenue" value={`₹${stats.revenue}`} highlight />
           <StatCard label="Total bookings" value={stats.count} />
           <StatCard label="Avg nights" value={stats.avgNights} />
         </div>
 
-        <div className="bg-[#161616] flex-1 rounded-[32px] p-8 border border-[#222] overflow-hidden flex flex-col shadow-2xl">
-          <div className="flex justify-between items-center mb-8">
+        <div className="bg-[#161616] flex-1 rounded-[32px] p-8 border border-[#222] overflow-hidden flex flex-col shadow-2xl min-h-0">
+          <div className="flex justify-between items-center mb-8 flex-shrink-0">
             <div>
               <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Selected Range</h3>
-              <p className="text-xs text-gray-600 mt-1">{activeRange[0] ? `${activeRange[0]} to ${activeRange[1]}` : 'No dates selected'}</p>
+              <p className="text-[10px] text-gray-600 mt-1">{activeRange[0] ? `${activeRange[0]} to ${activeRange[1]}` : 'No dates selected'}</p>
             </div>
             {selectedBookings.length > 0 && (
-              <button onClick={exportCSV} className="p-3 bg-blue-600 hover:bg-blue-500 rounded-full transition-all shadow-lg shadow-blue-900/20">
+              <button onClick={exportCSV} className="p-3 bg-blue-600 hover:bg-blue-500 rounded-full transition-all shadow-lg text-sm">
                 📥
               </button>
             )}
@@ -189,15 +186,15 @@ export default function App() {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
             {selectedBookings.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center opacity-20 grayscale">
+              <div className="h-full flex flex-col items-center justify-center opacity-20">
                  <span className="text-6xl mb-4">📅</span>
-                 <p className="text-center font-bold">Select dates on the grid<br/>to see guest list</p>
+                 <p className="text-center font-bold text-sm">Select dates on the grid<br/>to see guest list</p>
               </div>
             ) : (
               selectedBookings.map((b) => (
-                <div key={b.id} className="bg-[#1F1F1F] p-5 rounded-2xl border border-[#2A2A2A] hover:border-blue-500/50 transition-all group">
+                <div key={b.id} className="bg-[#1F1F1F] p-5 rounded-2xl border border-[#2A2A2A] hover:border-blue-500/50 transition-all">
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="font-bold text-[#F0F0F0] group-hover:text-blue-400 transition-colors">{b.guestName}</h4>
+                    <h4 className="font-bold text-sm text-[#F0F0F0]">{b.guestName}</h4>
                     <span className="text-[9px] font-mono text-gray-600">#{b.id}</span>
                   </div>
                   <div className="text-[11px] text-gray-400 space-y-1">
@@ -225,7 +222,6 @@ export default function App() {
   );
 }
 
-// UI HELPER COMPONENTS
 const StatCard = ({ label, value, highlight }) => (
   <div className="bg-[#161616] p-6 rounded-[24px] border border-[#222] hover:border-[#333] transition-all">
     <div className={`text-2xl font-black tracking-tight ${highlight ? 'text-blue-400' : 'text-white'}`}>{value}</div>
