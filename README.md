@@ -1,16 +1,30 @@
-# React + Vite
+# 🏨 Guestara Hotel Booking Heatmap
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive, high-performance occupancy visualization tool designed for hotel front-desk operations. This dashboard provides immediate insights into room availability, booking trends, and monthly performance metrics.
 
-Currently, two official plugins are available:
+**Live Demo:** [https://hotelheat.netlify.app/](https://hotelheat.netlify.app/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Key Features
 
-## React Compiler
+*   **Occupancy Heatmap**: Dynamic 7-column calendar grid with color-coded density mapping based on a 10-room capacity.
+*   **Drag-to-Select**: Native bi-directional range selection (Forward & Backward) across month boundaries.
+*   **Live Metrics Dashboard**: Real-time calculation of Monthly Revenue, Avg Occupancy, and Avg Stay Duration.
+*   **Advanced Filtering**: Instant search by Guest Name or Room Number that syncs with the calendar view.
+*   **Data Portability**: Integrated CSV Export functionality for administrative reporting.
+*   **Premium UI**: Custom dark-mode aesthetic designed for high-stress operational environments.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Technical Stack
 
-## Expanding the ESLint configuration
+*   **Frontend**: React.js (Vite)
+*   **Styling**: Tailwind CSS
+*   **Icons**: Lucide React
+*   **Date Logic**: Native JavaScript `Date` API (Zero external dependencies)
+*   **Deployment**: Netlify
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🏁 Installation & Setup
+
+1. Clone the repository.
+2. Install dependencies:
+   npm install
+3. Start the development server:
+   npm run dev
