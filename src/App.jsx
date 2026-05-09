@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";  
 
-// --- CONSTANTS & HELPERS ---
+ 
 const TOTAL_ROOMS = 10;
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const formatDate = (d) => d.toISOString().split("T")[0];
 
 const getHeatColor = (count) => {
@@ -33,11 +34,11 @@ const getMonthDays = (year, month) => {
   return days;
 };
 
-// --- MAIN COMPONENT ---
 export default function App() {
-  const [viewDate, setViewDate] = useState(new Date(2026, 1, 1));
+  const [viewDate, setViewDate] = useState(new Date());
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");  
   
   const [dragStart, setDragStart] = useState(null);
   const [dragEnd, setDragEnd] = useState(null);
@@ -70,46 +71,47 @@ export default function App() {
     return map;
   }, [bookings]);
 
+  
   const stats = useMemo(() => {
-   
-  const currentMonthBookings = bookings.filter(b => {
-    const d = new Date(b.checkIn);
-    return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
-  });
+    const currentMonthBookings = bookings.filter(b => {
+      const d = new Date(b.checkIn);
+      return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
+    });
 
-   
-  const totalOccupiedNights = currentMonthBookings.reduce((sum, b) => {
-    const nights = Math.round((new Date(b.checkOut) - new Date(b.checkIn)) / 86400000);
-    return sum + nights;
-  }, 0);
+    const totalOccupiedNights = currentMonthBookings.reduce((sum, b) => {
+      const nights = Math.round((new Date(b.checkOut) - new Date(b.checkIn)) / 86400000);
+      return sum + (nights > 0 ? nights : 1);
+    }, 0);
 
-  
-  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
-  const totalRooms = 10; // Maan lijiye aapke hotel mein 10 rooms hain
-  const totalCapacity = daysInMonth * totalRooms;
+    const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+    const totalCapacity = daysInMonth * TOTAL_ROOMS;
+    const occupancyPercent = totalCapacity > 0 ? Math.round((totalOccupiedNights / totalCapacity) * 100) : 0;
+    const totalRev = currentMonthBookings.reduce((s, b) => s + b.totalAmount, 0);
 
-  
-  const occupancyPercent = totalCapacity > 0 
-    ? Math.round((totalOccupiedNights / totalCapacity) * 100) 
-    : 0;
-
-   
-  const totalRev = currentMonthBookings.reduce((s, b) => s + b.totalAmount, 0);
-
-  return {
-    occupancy: occupancyPercent + "%",
-    revenue: (totalRev / 100000).toFixed(1) + "L",
-    count: currentMonthBookings.length,
-    avgNights: currentMonthBookings.length ? (totalOccupiedNights / currentMonthBookings.length).toFixed(1) : 0
-  };
-}, [bookings, viewDate]);
+    return {
+      occupancy: occupancyPercent + "%",
+      revenue: (totalRev / 100000).toFixed(1) + "L",
+      count: currentMonthBookings.length,
+      avgNights: currentMonthBookings.length ? (totalOccupiedNights / currentMonthBookings.length).toFixed(1) : 0
+    };
+  }, [bookings, viewDate]);
 
   const activeRange = isDragging ? [dragStart, dragEnd].sort() : [selection.start, selection.end].sort();
 
+   
   const selectedBookings = useMemo(() => {
-    if (!activeRange[0]) return [];
-    return bookings.filter(b => b.checkIn <= activeRange[1] && b.checkOut > activeRange[0]);
-  }, [activeRange, bookings]);
+    let filtered = bookings;
+    if (activeRange[0]) {
+      filtered = filtered.filter(b => b.checkIn <= activeRange[1] && b.checkOut > activeRange[0]);
+    }
+    if (searchTerm) {
+      filtered = filtered.filter(b => 
+        b.guestName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        b.roomNumber.toString().includes(searchTerm)
+      );
+    }
+    return filtered;
+  }, [activeRange, bookings, searchTerm]);
 
   const exportCSV = () => {
     const headers = "ID,Guest,Room,CheckIn,CheckOut,Amount\n";
@@ -134,7 +136,6 @@ export default function App() {
             <h1 className="text-3xl font-bold tracking-tight">
               {viewDate.toLocaleString("default", { month: "long" })} {viewDate.getFullYear()}
             </h1>
-            {/* HEAT LEVEL LEGEND - NOW AT TOP */}
             <div className="mt-4 flex items-center gap-3 bg-[#1A1A1A] w-fit px-4 py-2 rounded-xl border border-[#2A2A2A]">
               <span className="text-[10px] uppercase font-bold text-gray-500">Heat Level</span>
               <div className="flex gap-2">
@@ -144,9 +145,9 @@ export default function App() {
             </div>
           </div>
           <div className="flex gap-2 bg-[#1A1A1A] p-1.5 rounded-xl border border-[#2A2A2A]">
-            <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))}>←</button>
+            <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))}><ChevronLeft size={18}/></button>
             <button className="px-5 py-2 font-bold bg-[#2A2A2A] rounded-lg text-blue-400 text-sm" onClick={() => setViewDate(new Date())}>Today</button>
-            <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))}>→</button>
+            <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))}><ChevronRight size={18}/></button>
           </div>
         </header>
 
@@ -183,7 +184,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* RIGHT: DASHBOARD SECTION - FIXED HEIGHT STICKY */}
+      {/* RIGHT: DASHBOARD SECTION */}
       <div className="w-[400px] flex flex-col gap-6 h-full">
         <div className="grid grid-cols-2 gap-4 flex-shrink-0">
           <StatCard label="Avg occupancy" value={stats.occupancy} />
@@ -192,24 +193,37 @@ export default function App() {
           <StatCard label="Avg nights" value={stats.avgNights} />
         </div>
 
+        {/* --- HIGHLIGHT: UPDATED TITLE & SEARCH BAR --- */}
         <div className="bg-[#161616] flex-1 rounded-[32px] p-8 border border-[#222] overflow-hidden flex flex-col shadow-2xl min-h-0">
-          <div className="flex justify-between items-center mb-8 flex-shrink-0">
+          <div className="flex justify-between items-start mb-6 flex-shrink-0">
             <div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Selected Range</h3>
-              <p className="text-[10px] text-gray-600 mt-1">{activeRange[0] ? `${activeRange[0]} to ${activeRange[1]}` : 'No dates selected'}</p>
+              <h3 className="text-xl font-black uppercase tracking-tighter text-white ">RESERVATION OVERVIEW</h3>
+              <p className="text-[10px] text-gray-600 font-bold mt-1 uppercase tracking-widest">
+                {activeRange[0] ? `${activeRange[0]} — ${activeRange[1]}` : 'Showing All Bookings'}
+              </p>
             </div>
             {selectedBookings.length > 0 && (
-              <button onClick={exportCSV} className="p-3 bg-blue-600 hover:bg-blue-500 rounded-full transition-all shadow-lg text-sm">
-                📥
+              <button onClick={exportCSV} className="p-3 bg-blue-600 hover:bg-blue-500 rounded-full transition-all shadow-lg">
+                <Download size={18} />
               </button>
             )}
+          </div>
+
+          <div className="relative mb-6">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <input 
+              type="text"
+              placeholder="Search guest or room..."
+              className="w-full bg-[#0F0F0F] border border-[#2A2A2A] rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
             {selectedBookings.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center opacity-20">
-                 <span className="text-6xl mb-4">📅</span>
-                 <p className="text-center font-bold text-sm">Select dates on the grid<br/>to see guest list</p>
+                 <span className="text-6xl mb-4">🔍</span>
+                 <p className="text-center font-bold text-sm">No results found<br/>Try a different search</p>
               </div>
             ) : (
               selectedBookings.map((b) => (
