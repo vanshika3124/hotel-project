@@ -71,17 +71,38 @@ export default function App() {
   }, [bookings]);
 
   const stats = useMemo(() => {
-    const active = bookings.filter(b => b.status !== 'cancelled');
-    const totalRev = active.reduce((s, b) => s + b.totalAmount, 0);
-    const totalNights = active.reduce((s, b) => {
-      return s + Math.round((new Date(b.checkOut) - new Date(b.checkIn)) / 86400000);
-    }, 0);
-    return {
-      revenue: (totalRev / 100000).toFixed(1) + "L",
-      count: active.length,
-      avgNights: active.length ? (totalNights / active.length).toFixed(1) : 0
-    };
-  }, [bookings]);
+   
+  const currentMonthBookings = bookings.filter(b => {
+    const d = new Date(b.checkIn);
+    return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
+  });
+
+   
+  const totalOccupiedNights = currentMonthBookings.reduce((sum, b) => {
+    const nights = Math.round((new Date(b.checkOut) - new Date(b.checkIn)) / 86400000);
+    return sum + nights;
+  }, 0);
+
+  
+  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+  const totalRooms = 10; // Maan lijiye aapke hotel mein 10 rooms hain
+  const totalCapacity = daysInMonth * totalRooms;
+
+  
+  const occupancyPercent = totalCapacity > 0 
+    ? Math.round((totalOccupiedNights / totalCapacity) * 100) 
+    : 0;
+
+   
+  const totalRev = currentMonthBookings.reduce((s, b) => s + b.totalAmount, 0);
+
+  return {
+    occupancy: occupancyPercent + "%",
+    revenue: (totalRev / 100000).toFixed(1) + "L",
+    count: currentMonthBookings.length,
+    avgNights: currentMonthBookings.length ? (totalOccupiedNights / currentMonthBookings.length).toFixed(1) : 0
+  };
+}, [bookings, viewDate]);
 
   const activeRange = isDragging ? [dragStart, dragEnd].sort() : [selection.start, selection.end].sort();
 
@@ -165,7 +186,7 @@ export default function App() {
       {/* RIGHT: DASHBOARD SECTION - FIXED HEIGHT STICKY */}
       <div className="w-[400px] flex flex-col gap-6 h-full">
         <div className="grid grid-cols-2 gap-4 flex-shrink-0">
-          <StatCard label="Avg occupancy" value="73%" />
+          <StatCard label="Avg occupancy" value={stats.occupancy} />
           <StatCard label="Month revenue" value={`₹${stats.revenue}`} highlight />
           <StatCard label="Total bookings" value={stats.count} />
           <StatCard label="Avg nights" value={stats.avgNights} />
