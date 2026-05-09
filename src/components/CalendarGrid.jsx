@@ -1,4 +1,3 @@
-// src/components/CalendarGrid.jsx
 import React from 'react';
 import { getHeatColor, formatDate, TOTAL_ROOMS } from '../utils/dateUtils';
 

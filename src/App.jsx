@@ -124,7 +124,7 @@ export default function App() {
           </div>
           <div className="flex gap-2 bg-[#1A1A1A] p-1.5 rounded-xl border border-[#2A2A2A]">
             <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))}>←</button>
-            <button className="px-5 py-2 font-bold bg-[#2A2A2A] rounded-lg text-blue-400 text-sm" onClick={() => setViewDate(new Date(2026, 1, 1))}>Today</button>
+            <button className="px-5 py-2 font-bold bg-[#2A2A2A] rounded-lg text-blue-400 text-sm" onClick={() => setViewDate(new Date())}>Today</button>
             <button className="px-3 py-2 hover:bg-[#2A2A2A] rounded-lg" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))}>→</button>
           </div>
         </header>

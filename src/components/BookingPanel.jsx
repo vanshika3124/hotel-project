@@ -1,4 +1,3 @@
-// src/components/BookingPanel.jsx
 import React from 'react';
 
 const BookingPanel = ({ selection, bookings }) => {
